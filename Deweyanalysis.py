@@ -21,14 +21,13 @@ zen = len(samps['ZIP'].unique())
 new_samps.drop(columns = [ 'BUILDING_TYPE_TIME', 'BUILDING_TYPE_MH', 'BUILDING_TYPE_TH','DATE_POSTED','YEAR','MONTH'],axis =1,inplace=True)
 new_samps["logrent"] = np.log(new_samps["RENT_PRICE"])
 cleaned = new_samps.groupby('ZIP').filter(lambda x: len(x) > 25)
-
 listofzips = cleaned['ZIP'].unique()
 mse_list = []
 neural_mse_list = []
+'''
 for each in listofzips:
     cleaned1 = cleaned[cleaned['ZIP'] == each]
     X = cleaned1[['BEDS','BATHS','SQFT', 'BUILDING_TYPE_APT','BUILDING_TYPE_COMM', 'BUILDING_TYPE_CON','BUILDING_TYPE_SFR', 'GARAGE_Y', 'POOL_Y','TIME']].fillna(0)
-    #Linear Regression
     X_train, X_test, y_train, y_test = train_test_split(X, cleaned1['logrent'], test_size=0.2)
     y_test = np.array(y_test)
     model = LinearRegression()
@@ -68,11 +67,13 @@ average = np.mean(mse_list)
 average2 = np.mean(neural_mse_list)
 print(average)
 print(average2)
+'''
 
-
-
-
-
+zip_hot = pd.get_dummies(cleaned['ZIP'])
+temp = prince.MCA(one_hot=False, n_components=100,
+    n_iter=10)
+new_zip = temp.fit(zip_hot)
+mcaset = cleaned.drop('ZIP', axis =1)
 
 
 
@@ -83,5 +84,4 @@ print(average2)
 #0-1 columns for neural network 
 #MCA 
 #Straight eregression 
-#VAR 
 #Bayesian Hierarchical
