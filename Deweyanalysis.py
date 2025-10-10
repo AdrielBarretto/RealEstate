@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 import tensorflow as tf
 import keras
-import mca
+import matplotlib.pyplot as plt
 
 sample = pd.read_csv("a.csv")
 samps = sample.drop(['GRANITE', 'STAINLESS','GYM','DOORMAN','FURNISHED','LAUNDRY', 'CLUBHOUSE','LATITUDE','LONGITUDE','DESCRIPTION', 'GARAGE_COUNT','ADDRESS', 'COMPANY','ID','NEIGHBORHOOD','SCRAPED_TIMESTAMP','YEAR_BUILT','AVAILABLE_AT','AVAILABILITY_STATUS','ID'], axis=1)
@@ -68,9 +68,10 @@ average2 = np.mean(neural_mse_list)
 print(average)
 print(average2)
 '''
-print(cleaned['ZIP'].unique())
-mca_analysis = mca.MCA((cleaned['ZIP'].to_frame()))
-mca_factor = mca_analysis.fs_c()
+a = pd.get_dummies(cleaned['ZIP'],drop_first = False)
+pca = sc.decomposition.PCA(200)
+#pca.fit(a)
+#print(pca.explained_variance_ratio_)
 
 
 
