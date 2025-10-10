@@ -1,2 +1,3 @@
-# RealEstate
-Worked 3ish hours before first commits. 
+2 hours Monday
+2 hours Tuesday
+1.5 hours Friday 
