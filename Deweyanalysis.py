@@ -3,6 +3,7 @@ import numpy as np
 import sklearn as sc
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import SGDRegressor
 import tensorflow as tf
 import keras
 import gc
@@ -81,7 +82,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, cleaned['logrent'], test_
 X_train.columns = X_train.columns.astype(str)
 X_test.columns = X_test.columns.astype(str)
 y_test = np.array(y_test)
-model = LinearRegression()
+model = SGDRegressor(max_iter=1000, tol=1e-3)
 model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 mse = 0
