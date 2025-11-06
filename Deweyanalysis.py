@@ -1,9 +1,11 @@
 import pandas as pd 
 import numpy as np 
 import sklearn as sc
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import SGDRegressor
+from scipy.sparse import hstack
 import tensorflow as tf
 import keras
 import gc
@@ -71,51 +73,53 @@ print(average)
 print(average2)
 '''
 #Straight linear regression
-cleaned.dropna(inplace = True)
-a = pd.get_dummies(cleaned['ZIP'],drop_first = False, sparse=True)
-acols = a.columns
-cleaned = cleaned.join(a)
-t = ['BEDS','BATHS','SQFT', 'BUILDING_TYPE_APT','BUILDING_TYPE_COMM', 'BUILDING_TYPE_CON','BUILDING_TYPE_SFR', 'GARAGE_Y', 'POOL_Y','TIME']+acols.to_list()
 
+cleaned.dropna(inplace = True)
+t = ['BEDS','BATHS','SQFT', 'BUILDING_TYPE_APT','BUILDING_TYPE_COMM', 'BUILDING_TYPE_CON','BUILDING_TYPE_SFR', 'GARAGE_Y', 'POOL_Y','TIME','ZIP']
 X = cleaned[t]
+'''
+encoder = OneHotEncoder(handle_unknown='ignore', sparse_output=True)
+X_sparse_categorical = encoder.fit_transform(X[['ZIP']])
+X_dense_numerical = X[['BEDS','BATHS','SQFT', 'BUILDING_TYPE_APT','BUILDING_TYPE_COMM', 'BUILDING_TYPE_CON','BUILDING_TYPE_SFR', 'GARAGE_Y', 'POOL_Y','TIME']].values.astype(float)
+X = hstack([X_sparse_categorical, X_dense_numerical])
 X_train, X_test, y_train, y_test = train_test_split(X, cleaned['logrent'], test_size=0.2,random_state =24)
-X_train.columns = X_train.columns.astype(str)
-X_test.columns = X_test.columns.astype(str)
 y_test = np.array(y_test)
+y_train = np.array(y_train)
+
 model = SGDRegressor(max_iter=1000, tol=1e-3)
 model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
-mse = 0
-for i in range(len(y_test)):
-    mse+= (y_test[i]-y_pred[i])**2
-mse = mse/len(y_test)
+mse = np.mean((y_test-y_pred)**2)
+print(mse)
 
 #PCA
 del sample, samps, one, new_samps
 gc.collect()
+cleaned.dropna(inplace = True)
 a = pd.get_dummies(cleaned['ZIP'],drop_first = False, sparse=True)
 ab = a.sparse.to_coo().tocsr()
 pca = sc.decomposition.TruncatedSVD(200)
-d = pca.fit(ab)
-d = pd.DataFrame(d)
+z = pca.fit_transform(ab)
+d = pd.DataFrame(z, index = cleaned.index)
 pca_set = cleaned.join(d)
 colpca = ['BEDS','BATHS','SQFT', 'BUILDING_TYPE_APT','BUILDING_TYPE_COMM', 'BUILDING_TYPE_CON','BUILDING_TYPE_SFR', 'GARAGE_Y', 'POOL_Y','TIME']+d.columns.to_list()
 Xpca = pca_set[colpca]
+Xpca.columns = Xpca.columns.astype(str)
+print(Xpca.isna().sum())
 X_trainpca, X_testpca, y_trainpca, y_testpca = train_test_split(Xpca, pca_set['logrent'], test_size=0.2, random_state =24)
-X_trainpca.columns = X_train.columns.astype(str)
-X_testpca.columns = X_test.columns.astype(str)
 y_testpca = np.array(y_testpca)
-model = LinearRegression()
+model = SGDRegressor(max_iter=1000, tol=1e-3)
 model.fit(X_trainpca, y_trainpca)
 y_predpca = model.predict(X_testpca)
 msepca = 0
-for i in range(len(y_testpca)):
-    msepca += (y_testpca[i]-y_predpca[i])**2
-msepca = msepca/len(y_testpca)
-
+msepca = np.mean((y_testpca-y_predpca)**2)
+print(msepca)
+'''
 #Neural net 
 x = sc.preprocessing.StandardScaler().fit_transform(X)
-y = (np.array(pca_set['logrent']) - np.mean(np.array(pca_set['logrent'])))/np.std(np.array(pca_set['logrent']))
+mu = np.mean(np.array(cleaned['logrent']))
+stdevs = np.std(np.array(cleaned['logrent']))
+y = (np.array(cleaned['logrent']) - np.mean(np.array(cleaned['logrent'])))/np.std(np.array(cleaned['logrent']))
 nX_train, nX_test, ny_train, ny_test = sc.model_selection.train_test_split(x, y, test_size=0.2, random_state =24)
 hidden_units = 20
 activation = 'sigmoid'
@@ -136,8 +140,12 @@ neural_model.compile(loss='MeanSquaredError',
     optimizer=keras.optimizers.Adam(learning_rate=.01),
     metrics=['mse'])
 execute = neural_model.fit(nX_train, ny_train, epochs=epochs, batch_size=batch_size)
-test_acc = neural_model.evaluate(nX_test, ny_test)
+neural_y = neural_model.predict(nX_test)
+neural_mse = 0 
 
+y_pred_original = mu + stdevs * neural_y
+neural_mse = np.mean((ny_test - y_pred_original)**2)
+print(neural_mse)
 
 
 
