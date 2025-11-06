@@ -21,7 +21,7 @@ new_samps = pd.get_dummies(one,columns = ['GARAGE','POOL'], drop_first=True)
 zen = len(samps['ZIP'].unique())
 new_samps.drop(columns = [ 'BUILDING_TYPE_TIME', 'BUILDING_TYPE_MH', 'BUILDING_TYPE_TH','DATE_POSTED','YEAR','MONTH'],axis =1,inplace=True)
 new_samps["logrent"] = np.log(new_samps["RENT_PRICE"])
-cleaned = new_samps.groupby('ZIP').filter(lambda x: len(x) > 25)
+cleaned = new_samps.groupby('ZIP').filter(lambda x: len(x) > 30)
 listofzips = cleaned['ZIP'].unique()
 mse_list = []
 neural_mse_list = []
@@ -70,12 +70,16 @@ print(average)
 print(average2)
 '''
 #Straight linear regression
+cleaned.dropna(inplace = True)
 a = pd.get_dummies(cleaned['ZIP'],drop_first = False, sparse=True)
 acols = a.columns
 cleaned = cleaned.join(a)
-t = ['BEDS','BATHS','SQFT', 'BUILDING_TYPE_APT','BUILDING_TYPE_COMM', 'BUILDING_TYPE_CON','BUILDING_TYPE_SFR', 'GARAGE_Y', 'POOL_Y','TIME']+acols
-X = cleaned[t].fillna(0)
-X_train, X_test, y_train, y_test = train_test_split(X, cleaned['logrent'], test_size=0.2)
+t = ['BEDS','BATHS','SQFT', 'BUILDING_TYPE_APT','BUILDING_TYPE_COMM', 'BUILDING_TYPE_CON','BUILDING_TYPE_SFR', 'GARAGE_Y', 'POOL_Y','TIME']+acols.to_list()
+
+X = cleaned[t]
+X_train, X_test, y_train, y_test = train_test_split(X, cleaned['logrent'], test_size=0.2,random_state =24)
+X_train.columns = X_train.columns.astype(str)
+X_test.columns = X_test.columns.astype(str)
 y_test = np.array(y_test)
 model = LinearRegression()
 model.fit(X_train, y_train)
@@ -94,9 +98,11 @@ pca = sc.decomposition.TruncatedSVD(200)
 d = pca.fit(ab)
 d = pd.DataFrame(d)
 pca_set = cleaned.join(d)
-colpca = ['BEDS','BATHS','SQFT', 'BUILDING_TYPE_APT','BUILDING_TYPE_COMM', 'BUILDING_TYPE_CON','BUILDING_TYPE_SFR', 'GARAGE_Y', 'POOL_Y','TIME']+d.columns
-Xpca = pca_set[colpca].fillna(0)
-X_trainpca, X_testpca, y_trainpca, y_testpca = train_test_split(Xpca, pca_set['logrent'], test_size=0.2)
+colpca = ['BEDS','BATHS','SQFT', 'BUILDING_TYPE_APT','BUILDING_TYPE_COMM', 'BUILDING_TYPE_CON','BUILDING_TYPE_SFR', 'GARAGE_Y', 'POOL_Y','TIME']+d.columns.to_list()
+Xpca = pca_set[colpca]
+X_trainpca, X_testpca, y_trainpca, y_testpca = train_test_split(Xpca, pca_set['logrent'], test_size=0.2, random_state =24)
+X_trainpca.columns = X_train.columns.astype(str)
+X_testpca.columns = X_test.columns.astype(str)
 y_testpca = np.array(y_testpca)
 model = LinearRegression()
 model.fit(X_trainpca, y_trainpca)
@@ -109,7 +115,7 @@ msepca = msepca/len(y_testpca)
 #Neural net 
 x = sc.preprocessing.StandardScaler().fit_transform(X)
 y = (np.array(pca_set['logrent']) - np.mean(np.array(pca_set['logrent'])))/np.std(np.array(pca_set['logrent']))
-nX_train, nX_test, ny_train, ny_test = sc.model_selection.train_test_split(x, y, test_size=0.2)
+nX_train, nX_test, ny_train, ny_test = sc.model_selection.train_test_split(x, y, test_size=0.2, random_state =24)
 hidden_units = 20
 activation = 'sigmoid'
 learning_rate = 0.05
@@ -130,7 +136,6 @@ neural_model.compile(loss='MeanSquaredError',
     metrics=['mse'])
 execute = neural_model.fit(nX_train, ny_train, epochs=epochs, batch_size=batch_size)
 test_acc = neural_model.evaluate(nX_test, ny_test)
-
 
 
 

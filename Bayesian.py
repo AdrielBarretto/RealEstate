@@ -23,7 +23,7 @@ new_samps = pd.get_dummies(one,columns = ['GARAGE','POOL'], drop_first=True)
 zen = len(samps['ZIP'].unique())
 new_samps.drop(columns = [ 'BUILDING_TYPE_TIME', 'BUILDING_TYPE_MH', 'BUILDING_TYPE_TH','DATE_POSTED','YEAR','MONTH'],axis =1,inplace=True)
 new_samps["logrent"] = np.log(new_samps["RENT_PRICE"])
-cleaned = new_samps.groupby('ZIP').filter(lambda x: len(x) > 25)
+cleaned = new_samps.groupby('ZIP').filter(lambda x: len(x) > 30)
 a = cleaned[['BEDS','BATHS','SQFT', 'BUILDING_TYPE_APT','BUILDING_TYPE_COMM', 'BUILDING_TYPE_CON','BUILDING_TYPE_SFR', 'GARAGE_Y', 'POOL_Y', 'ZIP']].fillna(0)
 b = np.array(cleaned['logrent'])
 #split data
