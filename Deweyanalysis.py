@@ -5,6 +5,8 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import SGDRegressor
+from sklearn.preprocessing import StandardScaler, MaxAbsScaler
+from sklearn.pipeline import make_pipeline
 from scipy.sparse import hstack
 import tensorflow as tf
 import keras
@@ -77,6 +79,35 @@ print(average2)
 cleaned.dropna(inplace = True)
 t = ['BEDS','BATHS','SQFT', 'BUILDING_TYPE_APT','BUILDING_TYPE_COMM', 'BUILDING_TYPE_CON','BUILDING_TYPE_SFR', 'GARAGE_Y', 'POOL_Y','TIME','ZIP']
 X = cleaned[t]
+
+# Encode ZIP
+encoder = OneHotEncoder(handle_unknown='ignore', sparse_output=True)
+X_sparse_categorical = encoder.fit_transform(X[['ZIP']])
+
+# Combine with dense features
+X_dense_numerical = X[['BEDS','BATHS','SQFT','BUILDING_TYPE_APT',
+                       'BUILDING_TYPE_COMM','BUILDING_TYPE_CON',
+                       'BUILDING_TYPE_SFR','GARAGE_Y','POOL_Y','TIME']].astype(float)
+
+X = hstack([X_sparse_categorical, X_dense_numerical])
+
+# Split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, cleaned['logrent'], test_size=0.2, random_state=24
+)
+
+# OLS pipeline with scaling for numeric stability
+model = make_pipeline(MaxAbsScaler(), LinearRegression())
+model.fit(X_train, y_train)
+
+# Predict and evaluate
+y_pred = model.predict(X_test)
+
+mse = np.mean((y_test - y_pred)**2)
+print("MSE:", mse)
+print("y_test[:5]:", y_test[:5].values)
+print("y_pred[:5]:", y_pred[:5])
+print("y_pred range:", np.min(y_pred), np.max(y_pred))
 '''
 encoder = OneHotEncoder(handle_unknown='ignore', sparse_output=True)
 X_sparse_categorical = encoder.fit_transform(X[['ZIP']])
@@ -116,7 +147,7 @@ msepca = np.mean((y_testpca-y_predpca)**2)
 print(msepca)
 '''
 #Neural net 
-x = sc.preprocessing.StandardScaler().fit_transform(X)
+x = sc.preprocessing.StandardScaler(with_mean=False).fit_transform(X)
 mu = np.mean(np.array(cleaned['logrent']))
 stdevs = np.std(np.array(cleaned['logrent']))
 y = (np.array(cleaned['logrent']) - np.mean(np.array(cleaned['logrent'])))/np.std(np.array(cleaned['logrent']))
@@ -128,7 +159,7 @@ epochs = 25
     # [5,10,25,50,75,100]
 batch_size = 32
 neural_model = keras.models.Sequential()
-neural_model.add(keras.layers.Dense(input_dim=len(X.columns),
+neural_model.add(keras.layers.Dense(input_dim=X.shape[1],
                                  units=hidden_units,
                                  activation=activation))
     # add the output layer
@@ -144,6 +175,7 @@ neural_y = neural_model.predict(nX_test)
 neural_mse = 0 
 
 y_pred_original = mu + stdevs * neural_y
+ny_test = ny_test*stdevs + mu
 neural_mse = np.mean((ny_test - y_pred_original)**2)
 print(neural_mse)
 
