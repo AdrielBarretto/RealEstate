@@ -31,7 +31,20 @@ def bayesianloop(sigma, sigmagroup, xtx, xty, beta, invlamb, betaindividual, big
         sigmagroup[j] = invgamma.rvs(a =.5*(1+size[j]), scale = .5*(xi+secondary) , size =1)[0]
     xi = np.random.gamma(1+.5*m, (1/sigs)+.5*np.sum(np.array(sigmagroup)))
     return sigma, beta, betaindividual, xi, sigmagroup
-
+def msecalc(betaindividual1,xlisttest,ylisttest):
+    ypred = []
+    for j in range(m):
+        ypred.append(xlisttest[j]@betaindividual1[j])
+        ypred[j] = np.array(ypred[j])
+        ylisttest[j] = np.array(ylisttest[j])
+    count = 0
+    msetemp = 0 
+    for j in range(m):
+        for i in range(len(ypred[j])):
+            msetemp+= (ypred[j][i]-ylisttest[j][i])**2
+            count+=1
+    mse = (1/count)*msetemp
+    return mse
 sample = pd.read_csv("a.csv")
 samps = sample.drop(['GRANITE', 'STAINLESS','GYM','DOORMAN','FURNISHED','LAUNDRY', 'CLUBHOUSE','LATITUDE','LONGITUDE','DESCRIPTION', 'GARAGE_COUNT','ADDRESS', 'COMPANY','ID','NEIGHBORHOOD','SCRAPED_TIMESTAMP','YEAR_BUILT','AVAILABLE_AT','AVAILABILITY_STATUS','ID'], axis=1)
 samps['YEAR'] =pd.to_datetime(samps['DATE_POSTED'])
@@ -154,31 +167,26 @@ def rhat(list, num):
 r = 1000
 listbeta11 = [[betaindividual1[1][1]],[betaindividual2[1][1]], [betaindividual3[1][1]], [betaindividual1[1][1]]]
 listbeta105 = [[betaindividual1[10][5]], [betaindividual2[10][5]], [betaindividual2[10][5]], [betaindividual2[10][5]]]
-while r>1.05:
+i=1
+while r>1.1:
+   print(i)
    sigma1, beta1, betaindividual1, xi1, sigmagroup1 = bayesianloop(sigma1, sigmagroup1, xtx, xty, beta1, invlamb, betaindividual1, bigsigma, xlist, ylist, xi1,sigs)
    listbeta11[0].append(betaindividual1[1][1])
    listbeta105[0].append(betaindividual1[10][5])
+   print(msecalc(betaindividual1,xlisttest, ylisttest))
    sigma2, beta2, betaindividual2, xi2, sigmagroup2 = bayesianloop(sigma2, sigmagroup2, xtx, xty, beta2, invlamb, betaindividual2, bigsigma, xlist, ylist, xi2,sigs)
    listbeta11[1].append(betaindividual2[1][1])
    listbeta105[1].append(betaindividual2[10][5])
+   print(msecalc(betaindividual2,xlisttest, ylisttest))
    sigma3, beta3, betaindividual3, xi3, sigmagroup3 = bayesianloop(sigma3, sigmagroup3, xtx, xty, beta3, invlamb, betaindividual3, bigsigma, xlist, ylist, xi3,sigs)
    listbeta11[2].append(betaindividual3[1][1])
    listbeta105[2].append(betaindividual3[10][5])
+   print(msecalc(betaindividual3,xlisttest, ylisttest))
    sigma4, beta4, betaindividual4, xi4, sigmagroup4 = bayesianloop(sigma4, sigmagroup4, xtx, xty, beta4, invlamb, betaindividual4, bigsigma, xlist, ylist, xi4,sigs)
    listbeta11[3].append(betaindividual4[1][1])
    listbeta105[3].append(betaindividual4[10][5])
-   r = np.max([rhat(listbeta11, 4), rhat(listbeta105, 4)])
+   print(msecalc(betaindividual4,xlisttest, ylisttest))
+   r = rhat(listbeta11, 4)
    print(r)
-ypred = []
-for j in range(m):
-    ypred.append(xlisttest[j]@betaindividual1[j])
-    ypred[j] = np.array(ypred[j])
-    ylisttest[j] = np.array(ylisttest[j])
-count = 0
-msetemp = 0 
-for j in range(m):
-    for i in range(len(ypred[j])):
-        msetemp+= (ypred[j][i]-ylisttest[j][i])**2
-        count+=1
-mse = (1/count)*msetemp
-print(mse)
+   i+=1
+   #print(str(r)+" Individual: "+str(rhat(listbeta11, 4))+ " " + str(rhat(listbeta105, 4)))
