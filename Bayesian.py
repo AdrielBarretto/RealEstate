@@ -155,7 +155,6 @@ r = 1000
 listbeta11 = [[betaindividual1[1][1]],[betaindividual2[1][1]], [betaindividual3[1][1]], [betaindividual1[1][1]]]
 listbeta105 = [[betaindividual1[10][5]], [betaindividual2[10][5]], [betaindividual2[10][5]], [betaindividual2[10][5]]]
 while r>1.05:
-   print("here")
    sigma1, beta1, betaindividual1, xi1, sigmagroup1 = bayesianloop(sigma1, sigmagroup1, xtx, xty, beta1, invlamb, betaindividual1, bigsigma, xlist, ylist, xi1,sigs)
    listbeta11[0].append(betaindividual1[1][1])
    listbeta105[0].append(betaindividual1[10][5])
@@ -169,6 +168,7 @@ while r>1.05:
    listbeta11[3].append(betaindividual4[1][1])
    listbeta105[3].append(betaindividual4[10][5])
    r = np.max([rhat(listbeta11, 4), rhat(listbeta105, 4)])
+   print(r)
 ypred = []
 for j in range(m):
     ypred.append(xlisttest[j]@betaindividual[j])
