@@ -171,15 +171,13 @@ while r>1.05:
    print(r)
 ypred = []
 for j in range(m):
-    ypred.append(xlisttest[j]@betaindividual[j])
+    ypred.append(xlisttest[j]@betaindividual1[j])
     ypred[j] = np.array(ypred[j])
     ylisttest[j] = np.array(ylisttest[j])
 count = 0
 msetemp = 0 
 for j in range(m):
     for i in range(len(ypred[j])):
-        print(ypred[j][i])
-        print(ylisttest[j][i])
         msetemp+= (ypred[j][i]-ylisttest[j][i])**2
         count+=1
 mse = (1/count)*msetemp
