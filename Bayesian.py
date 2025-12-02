@@ -13,7 +13,7 @@ import math as math
 #Maxrhat gets the highest rhat
 #Listinitializer sets up the list of rhats 
 #Listappender adds it 
-def bayesianloop(sigma, sigmagroup, xtx, xty, beta, invlamb, betaindividual, bigsigma, xlist, ylist, xi,sigs,m):
+def bayesianloop(sigma, sigmagroup, xtx, xty, beta, invlamb, betaindividual, bigsigma, xlist, ylist, xi,sigs,m,mu, p, size):
     siginv = np.linalg.inv(sigma)
     for j in range(m):
         cov = np.linalg.inv(siginv+(1/sigmagroup[j])*xtx[j].values)
@@ -23,18 +23,18 @@ def bayesianloop(sigma, sigmagroup, xtx, xty, beta, invlamb, betaindividual, big
     sum_betas = np.sum(betaindividual, axis=0)
     mubeta = covbeta@(invlamb@mu+siginv@sum_betas)
     beta = np.random.multivariate_normal(mubeta, covbeta)
-    summy = bigsigma
+    summy = bigsigma.copy()
     for j in range(m):
         a = betaindividual[j]-beta
         summy+=np.outer(a, a)
-    scale = np.linalg.inv(summy)
-    sigma = invwishart.rvs(df=p+2+m, scale=scale)
+    sigma = invwishart.rvs(df=p+2+m, scale=summy)
     for j in range(m):
         second = ylist[j]-xlist[j].values@betaindividual[j]
         t = [x ** 2 for x in second]
         secondary = np.sum(np.array(t))
         sigmagroup[j] = invgamma.rvs(a =.5*(1+size[j]), scale = .5*(xi+secondary) , size =1)[0]
-    xi = np.random.gamma(1+.5*m, (1/sigs)+.5*np.sum(np.array(sigmagroup)))
+    inversesigma =  (1/sigs)+.5*np.sum(1/np.array(sigmagroup))
+    xi = np.random.gamma(1+.5*m,1/inversesigma)
     return sigma, beta, betaindividual, xi, sigmagroup
 def msecalc(betaindividual1,xlisttest,ylisttest):
     ypred = []
@@ -50,15 +50,14 @@ def msecalc(betaindividual1,xlisttest,ylisttest):
             count+=1
     mse = (1/count)*msetemp
     return mse
-def rhat(list, num):
-    n = len(list[0])
+def rhat(lister, num):
+    n = len(lister[0])
     mean = []
     sdchain = []
     for i in range(num):
-        mean.append(np.mean(np.array(list[i])))
-        sdchain.append(np.var(np.array(list[i]), ddof=1))
-    fullmean = np.mean(np.array(mean))
-    B = n*np.var(np.array(sdchain),ddof=1)
+        mean.append(np.mean(np.array(lister[i])))
+        sdchain.append(np.var(np.array(lister[i]), ddof=1))
+    B = n*np.var(np.array(mean),ddof=1)
     W = np.mean(sdchain)
     varpsiy = ((n-1)/n)*W+(1/n)*B
     rhat = np.sqrt(varpsiy/W)
@@ -66,7 +65,7 @@ def rhat(list, num):
 def maxrhat(lister,num,param):
     maxval = 0
     for i in range(len(lister)):
-            a = rhat(lister[i],4)
+            a = rhat(lister[i],num)
             if a>maxval:
                 maxval = a
     return maxval
@@ -223,25 +222,43 @@ for j in range(m):
 print("Initialize done")
 #Initial sampling/Burn in 
 for i in range(500):
-    sigma1, beta1, betaindividual1, xi1, sigmagroup1 = bayesianloop(sigma1, sigmagroup1, xtx, xty, beta1, invlamb, betaindividual1, bigsigma, xlist, ylist, xi1,sigs, m)
-    sigma2, beta2, betaindividual2, xi2, sigmagroup2 = bayesianloop(sigma2, sigmagroup2, xtx, xty, beta2, invlamb, betaindividual2, bigsigma, xlist, ylist, xi2,sigs,m)
-    sigma3, beta3, betaindividual3, xi3, sigmagroup3 = bayesianloop(sigma3, sigmagroup3, xtx, xty, beta3, invlamb, betaindividual3, bigsigma, xlist, ylist, xi3,sigs,m)
-    sigma4, beta4, betaindividual4, xi4, sigmagroup4 = bayesianloop(sigma4, sigmagroup4, xtx, xty, beta4, invlamb, betaindividual4, bigsigma, xlist, ylist, xi4,sigs,m)
+    print(i)
+    sigma1, beta1, betaindividual1, xi1, sigmagroup1 = bayesianloop(sigma1, sigmagroup1, xtx, xty, beta1, invlamb, betaindividual1, bigsigma, xlist, ylist, xi1,sigs, m,mu,p,size)
+    sigma2, beta2, betaindividual2, xi2, sigmagroup2 = bayesianloop(sigma2, sigmagroup2, xtx, xty, beta2, invlamb, betaindividual2, bigsigma, xlist, ylist, xi2,sigs,m,mu,p,size)
+    sigma3, beta3, betaindividual3, xi3, sigmagroup3 = bayesianloop(sigma3, sigmagroup3, xtx, xty, beta3, invlamb, betaindividual3, bigsigma, xlist, ylist, xi3,sigs,m,mu,p,size)
+    sigma4, beta4, betaindividual4, xi4, sigmagroup4 = bayesianloop(sigma4, sigmagroup4, xtx, xty, beta4, invlamb, betaindividual4, bigsigma, xlist, ylist, xi4,sigs,m,mu,p,size)
 print("Sampling done")
 maxrhats = []
 
 totallist = listinitializer(betaindividual1,betaindividual2, betaindividual3, betaindividual4)
 r = 100000
+i=1
 while r>1.05:
-    sigma1, beta1, betaindividual1, xi1, sigmagroup1 = bayesianloop(sigma1, sigmagroup1, xtx, xty, beta1, invlamb, betaindividual1, bigsigma, xlist, ylist, xi1,sigs,m)
-    sigma2, beta2, betaindividual2, xi2, sigmagroup2 = bayesianloop(sigma2, sigmagroup2, xtx, xty, beta2, invlamb, betaindividual2, bigsigma, xlist, ylist, xi2,sigs,m)
-    sigma3, beta3, betaindividual3, xi3, sigmagroup3 = bayesianloop(sigma3, sigmagroup3, xtx, xty, beta3, invlamb, betaindividual3, bigsigma, xlist, ylist, xi3,sigs,m)
-    sigma4, beta4, betaindividual4, xi4, sigmagroup4 = bayesianloop(sigma4, sigmagroup4, xtx, xty, beta4, invlamb, betaindividual4, bigsigma, xlist, ylist, xi4,sigs,m)
+    sigma1, beta1, betaindividual1, xi1, sigmagroup1 = bayesianloop(sigma1, sigmagroup1, xtx, xty, beta1, invlamb, betaindividual1, bigsigma, xlist, ylist, xi1,sigs,m,mu,p,size)
+    sigma2, beta2, betaindividual2, xi2, sigmagroup2 = bayesianloop(sigma2, sigmagroup2, xtx, xty, beta2, invlamb, betaindividual2, bigsigma, xlist, ylist, xi2,sigs,m,mu,p,size)
+    sigma3, beta3, betaindividual3, xi3, sigmagroup3 = bayesianloop(sigma3, sigmagroup3, xtx, xty, beta3, invlamb, betaindividual3, bigsigma, xlist, ylist, xi3,sigs,m,mu,p,size)
+    sigma4, beta4, betaindividual4, xi4, sigmagroup4 = bayesianloop(sigma4, sigmagroup4, xtx, xty, beta4, invlamb, betaindividual4, bigsigma, xlist, ylist, xi4,sigs,m,mu,p,size)
+    totallist = listappender(totallist,10,betaindividual1, betaindividual2, betaindividual3,betaindividual4,m)
     if i%10 == 0:
-        totallist = listappender(totallist,10,betaindividual1, betaindividual2, betaindividual3,betaindividual4,m)
         r = maxrhat(totallist,num = 4, param = 10)
         maxrhats.append(r)
         print(r)
     i+=1
-
+print("convergence done")
 print("MSE:"+str(msecalc(betaindividual4,xlisttest, ylisttest)))
+print("MSE:"+str(msecalc(betaindividual3,xlisttest, ylisttest)))
+print("MSE:"+str(msecalc(betaindividual2,xlisttest, ylisttest)))
+print("MSE:"+str(msecalc(betaindividual1,xlisttest, ylisttest)))
+finallist = []
+for i in range(30):
+    sigma1, beta1, betaindividual1, xi1, sigmagroup1 = bayesianloop(sigma1, sigmagroup1, xtx, xty, beta1, invlamb, betaindividual1, bigsigma, xlist, ylist, xi1,sigs,m,mu,p,size)
+    sigma2, beta2, betaindividual2, xi2, sigmagroup2 = bayesianloop(sigma2, sigmagroup2, xtx, xty, beta2, invlamb, betaindividual2, bigsigma, xlist, ylist, xi2,sigs,m,mu,p,size)
+    sigma3, beta3, betaindividual3, xi3, sigmagroup3 = bayesianloop(sigma3, sigmagroup3, xtx, xty, beta3, invlamb, betaindividual3, bigsigma, xlist, ylist, xi3,sigs,m,mu,p,size)
+    sigma4, beta4, betaindividual4, xi4, sigmagroup4 = bayesianloop(sigma4, sigmagroup4, xtx, xty, beta4, invlamb, betaindividual4, bigsigma, xlist, ylist, xi4,sigs,m,mu,p,size)
+    finallist.append(betaindividual1)
+    finallist.append(betaindividual2)
+    finallist.append(betaindividual3)
+    finallist.append(betaindividual4)
+print("final mean")
+finalbetalist = np.mean(finallist, axis=0)
+print("Final MSE:"+str(msecalc(finalbetalist,xlisttest, ylisttest)))
