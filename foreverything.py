@@ -39,10 +39,10 @@ new_samps = pd.get_dummies(one,columns = ['GARAGE','POOL'], drop_first=True)
 zen = len(samps['ZIP'].unique())
 new_samps.drop(columns = [ 'BUILDING_TYPE_TIME', 'BUILDING_TYPE_MH', 'BUILDING_TYPE_TH','DATE_POSTED','YEAR','MONTH'],axis =1,inplace=True)
 new_samps["logrent"] = np.log(new_samps["RENT_PRICE"])
+new_samps = new_samps.dropna()
 zip_counts = new_samps.groupby("ZIP")["ZIP"].transform("count")
 # cleaned = samps[zip_counts > 30]
 cleaned = new_samps[zip_counts > 50]
-cleaned = cleaned.dropna()
 del samps
 del new_samps
 gc.collect()
@@ -152,7 +152,7 @@ for each in listofzips:
     gc.collect()
     cleaned1 = cleaned[cleaned['ZIP'] == each]
     X = cleaned1[['BEDS','BATHS','SQFT', 'BUILDING_TYPE_APT','BUILDING_TYPE_COMM', 'BUILDING_TYPE_CON','BUILDING_TYPE_SFR', 'GARAGE_Y', 'POOL_Y','TIME']].fillna(0)
-    if X.shape[0] == 0:
+    if X.shape[0]< 5:
         continue
     #X.dropna(inplace = True)
     X_train, X_test, y_train, y_test = train_test_split(X, cleaned1['logrent'], test_size=0.2)
@@ -166,7 +166,7 @@ for each in listofzips:
     mse = mse/len(y_test)
     mse_list.append(mse)
 average = np.mean(mse_list)
-print("MSE for Independent Linear Regressions"+str(average))
+print("MSE for Independent Linear Regressions: "+str(average))
 print("Time for Bayesian loop")
 def bayesianloop(sigma, sigmagroup, xtx, xty, beta, invlamb, betaindividual, bigsigma, xlist, ylist, xi,sigs,m,mu, p, size):
     siginv = np.linalg.inv(sigma)
@@ -264,6 +264,7 @@ lamb = np.array([
     [-1.38180939e+00, -6.25751273e+00, -4.90178389e-03, -4.27492601e+01, -4.06496000e+01, -4.01466318e+01, -3.43151619e+01,  1.19654995e-01, -2.05063007e+00,  5.97457038e+01]
 ])
 invlamb = np.linalg.inv(lamb)
+p = mu.shape[0]+1
 sigma = lamb
 bigsigma = lamb
 beta = mu

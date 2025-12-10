@@ -39,10 +39,10 @@ new_samps = pd.get_dummies(one,columns = ['GARAGE','POOL'], drop_first=True)
 zen = len(samps['ZIP'].unique())
 new_samps.drop(columns = [ 'BUILDING_TYPE_TIME', 'BUILDING_TYPE_MH', 'BUILDING_TYPE_TH','DATE_POSTED','YEAR','MONTH'],axis =1,inplace=True)
 new_samps["logrent"] = np.log(new_samps["RENT_PRICE"])
+new_samps = new_samps.dropna()
 zip_counts = new_samps.groupby("ZIP")["ZIP"].transform("count")
 # cleaned = samps[zip_counts > 30]
 cleaned = new_samps[zip_counts > 50]
-cleaned = cleaned.dropna()
 del samps
 del new_samps
 gc.collect()
