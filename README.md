@@ -1,3 +1,6 @@
-2 hours Monday
-2 hours Tuesday
-1.5 hours Friday 
+The code a.csv has been shared to those who need it. The code in Final should be the code run. All code mentioned below is in Final
+foreverything.py contains everything and when run contains all the analysis.
+cleaningcode.py contains the code to clean the data. Must be run before any of the files below can be run. 
+bayesianhierarchical.py contains the code of the hierarchical model (requires cleaning code to be run)
+independentlinearregression.py contains the code of the independent linear regressions  (requires cleaning code to be run)
+largelinearregression.py contains the code of the large linear model (requires cleaning code to be run)
