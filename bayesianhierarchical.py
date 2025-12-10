@@ -1,25 +1,9 @@
-import os
 import pandas as pd 
-import polars as pl
 import numpy as np 
-import sklearn as sc
-from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import SGDRegressor
-from sklearn.preprocessing import StandardScaler, MaxAbsScaler
-from sklearn.pipeline import make_pipeline
 from scipy.stats import invwishart
 from scipy.stats import invgamma
 import math as math 
-from scipy.sparse import hstack
-from scipy.sparse import csr_matrix
-from keras.utils import Sequence
-from concurrent.futures import ThreadPoolExecutor
-# import tensorflow as tf
-# import keras
-from sklearn.metrics import r2_score
-import json
 import gc
 import matplotlib.pyplot as plt
 
@@ -187,7 +171,7 @@ for j in range(m):
     betaindividual4.append(np.random.multivariate_normal(mean = beta4, cov = sigma4))
 print("Initialize done")
 
-for i in range(100):
+for i in range(500):
     print(i)
     sigma1, beta1, betaindividual1, xi1, sigmagroup1 = bayesianloop(sigma1, sigmagroup1, xtx, xty, beta1, invlamb, betaindividual1, bigsigma, xlist, ylist, xi1,sigs, m,mu,p,size)
     sigma2, beta2, betaindividual2, xi2, sigmagroup2 = bayesianloop(sigma2, sigmagroup2, xtx, xty, beta2, invlamb, betaindividual2, bigsigma, xlist, ylist, xi2,sigs,m,mu,p,size)
@@ -199,7 +183,7 @@ maxrhats = []
 totallist = listinitializer(betaindividual1,betaindividual2, betaindividual3, betaindividual4)
 r = 100000
 i=1
-while r>1.3:
+while r>1.05:
     sigma1, beta1, betaindividual1, xi1, sigmagroup1 = bayesianloop(sigma1, sigmagroup1, xtx, xty, beta1, invlamb, betaindividual1, bigsigma, xlist, ylist, xi1,sigs,m,mu,p,size)
     sigma2, beta2, betaindividual2, xi2, sigmagroup2 = bayesianloop(sigma2, sigmagroup2, xtx, xty, beta2, invlamb, betaindividual2, bigsigma, xlist, ylist, xi2,sigs,m,mu,p,size)
     sigma3, beta3, betaindividual3, xi3, sigmagroup3 = bayesianloop(sigma3, sigmagroup3, xtx, xty, beta3, invlamb, betaindividual3, bigsigma, xlist, ylist, xi3,sigs,m,mu,p,size)
@@ -228,3 +212,7 @@ for i in range(30):
 print("final mean")
 finalbetalist = np.mean(finallist, axis=0)
 print("Final MSE:"+str(msecalc(finalbetalist,xlisttest, ylisttest)))
+plt.plot([finallist[i][100][4]for i in range(120)])
+plt.ylabel('Beta Value')
+plt.title('Convergence Plot')
+plt.show()

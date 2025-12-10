@@ -1,27 +1,20 @@
-import os
 import pandas as pd 
-import polars as pl
 import numpy as np 
 import sklearn as sc
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import SGDRegressor
-from sklearn.preprocessing import StandardScaler, MaxAbsScaler
-from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from scipy.stats import invwishart
 from scipy.stats import invgamma
 import math as math 
 from scipy.sparse import hstack
 from scipy.sparse import csr_matrix
-from keras.utils import Sequence
-from concurrent.futures import ThreadPoolExecutor
-# import tensorflow as tf
-# import keras
 from sklearn.metrics import r2_score
-import json
 import gc
 import matplotlib.pyplot as plt
+
 
 cleaned = pd.read_csv("acleaned.csv")
 listofzips = cleaned["ZIP"].unique()
@@ -50,4 +43,4 @@ for each in listofzips:
         mse = mse/len(y_test)
         mse_list.append(mse)
 average = np.mean(mse_list)
-print("MSE for Independent Linear Regressions"+str(average))
+print("MSE for Independent Linear Regressions: "+str(average))

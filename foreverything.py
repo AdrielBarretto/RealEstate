@@ -1,6 +1,4 @@
-import os
 import pandas as pd 
-import polars as pl
 import numpy as np 
 import sklearn as sc
 from sklearn.preprocessing import OneHotEncoder
@@ -8,18 +6,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import SGDRegressor
 from sklearn.preprocessing import StandardScaler, MaxAbsScaler
-from sklearn.pipeline import make_pipeline
 from scipy.stats import invwishart
 from scipy.stats import invgamma
 import math as math 
 from scipy.sparse import hstack
 from scipy.sparse import csr_matrix
-from keras.utils import Sequence
-from concurrent.futures import ThreadPoolExecutor
 # import tensorflow as tf
 # import keras
 from sklearn.metrics import r2_score
-import json
 import gc
 import matplotlib.pyplot as plt
 
@@ -240,6 +234,7 @@ def listappender(lister,param,betaindividual1, betaindividual2, betaindividual3,
             lister[z][3].append(betaindividual4[i][j])
     return lister
 
+
 cleaned['INTERCEPT'] = 1
 t = ['BEDS','BATHS','SQFT', 'BUILDING_TYPE_APT','BUILDING_TYPE_COMM', 'BUILDING_TYPE_CON','BUILDING_TYPE_SFR', 'GARAGE_Y', 'POOL_Y', 'ZIP', 'INTERCEPT']
 
@@ -368,3 +363,8 @@ for i in range(30):
 print("final mean")
 finalbetalist = np.mean(finallist, axis=0)
 print("Final MSE:"+str(msecalc(finalbetalist,xlisttest, ylisttest)))
+
+plt.plot([finallist[i][100][4]for i in range(120)])
+plt.ylabel('Beta Value')
+plt.title('Convergence Plot')
+plt.show()
